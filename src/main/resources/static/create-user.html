@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Create User</title>
+</head>
+<body>
+  <h2>Tạo user mới</h2>
+  <form id="frm">
+    <label>Username: <input id="username" required></label><br><br>
+    <label>Password: <input id="password" type="password" required></label><br><br>
+    <button type="submit">Tạo user</button>
+  </form>
+
+  <pre id="result"></pre>
+
+  <script>
+    const form = document.getElementById('frm');
+    const result = document.getElementById('result');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      result.textContent = 'Đang gửi...';
+
+      try {
+        const res = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const text = await res.text();
+        if (!res.ok) {
+          result.textContent = `Lỗi ${res.status}: ` + text;
+        } else {
+          // nhận JSON trả về user đã lưu
+          const json = JSON.parse(text);
+          result.textContent = 'Tạo thành công:\n' + JSON.stringify(json, null, 2);
+        }
+      } catch (err) {
+        result.textContent = 'Lỗi kết nối: ' + err;
+      }
+    });
+  </script>
+</body>
+</html>
