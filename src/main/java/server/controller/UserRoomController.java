@@ -58,13 +58,35 @@ public class UserRoomController {
         if (u.isEmpty() || !passwordEncoder.matches(password, u.get().getPassword())) {
             return ResponseEntity.status(401).body("Invalid credentials!");
         }
-        String token = jwtUtil.generateToken(username);
+        String accessToken = jwtUtil.generateToken(username);
+        String refreshToken = jwtUtil.generateRefreshToken(username);
         Map<String, Object> resp = new HashMap<>();
-        resp.put("token", token);
+        resp.put("accessToken", accessToken);
+        resp.put("refreshToken", refreshToken);
         resp.put("username", username);
         resp.put("role", u.get().getRole());
         return ResponseEntity.ok(resp);
     }
+
+    @PostMapping("/auth/refresh")
+    public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> body) {
+        String refreshToken = body.get("refreshToken");
+        try {
+            String username = jwtUtil.extractUsername(refreshToken);
+            // Nếu refresh token hợp lệ thì cấp access token mới
+            if (!jwtUtil.isTokenExpired(refreshToken)) {
+                String newAccess = jwtUtil.generateToken(username);
+                Map<String, Object> resp = new HashMap<>();
+                resp.put("accessToken", newAccess);
+                resp.put("refreshToken", refreshToken); // vẫn dùng refresh cũ
+                return ResponseEntity.ok(resp);
+            }
+            return ResponseEntity.status(401).body("Refresh token expired");
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body("Invalid refresh token");
+        }
+    }
+
 
     /* ---------- ROOM ---------- */
     @PostMapping("/room/create")
@@ -114,6 +136,67 @@ public class UserRoomController {
 
         return ResponseEntity.ok("Join success! Room code: " + code);
     }
+
+    @GetMapping("/room/list")
+    public ResponseEntity<?> listRooms(HttpServletRequest request) {
+        String username = getUsernameFromAuth(request);
+        User user = userRepo.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // lấy tất cả phòng mà user tham gia
+        List<RoomMember> memberships = roomMemberRepo.findAll();
+        List<Room> rooms = new ArrayList<>();
+            for (RoomMember m : memberships) {
+                if (m.getUser().getId().equals(user.getId())) {
+                    rooms.add(m.getRoom());
+                }
+            }
+        return ResponseEntity.ok(rooms);
+    }
+
+    @PostMapping("/room/leave/{code}")
+    public ResponseEntity<?> leaveRoom(@PathVariable String code, HttpServletRequest request) {
+        String username = getUsernameFromAuth(request);
+        User user = userRepo.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Room room = roomRepo.findByCode(code)
+                .orElseThrow(() -> new RuntimeException("Room not found"));
+
+        // xóa user khỏi room
+        roomMemberRepo.findAll().stream()
+                .filter(m -> m.getRoom().getId().equals(room.getId()) &&
+                            m.getUser().getId().equals(user.getId()))
+                .findFirst()
+                .ifPresent(roomMemberRepo::delete);
+
+        return ResponseEntity.ok("Left room " + code);
+    }
+
+    @PostMapping("/room/close/{code}")
+    public ResponseEntity<?> closeRoom(@PathVariable String code, HttpServletRequest request) {
+        String username = getUsernameFromAuth(request);
+        User user = userRepo.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Room room = roomRepo.findByCode(code)
+                .orElseThrow(() -> new RuntimeException("Room not found"));
+
+        // kiểm tra role = OWNER
+        boolean isOwner = roomMemberRepo.findAll().stream()
+                .anyMatch(m -> m.getRoom().getId().equals(room.getId()) &&
+                            m.getUser().getId().equals(user.getId()) &&
+                            "OWNER".equals(m.getRole()));
+            if (!isOwner) {
+            return ResponseEntity.status(403).body("Only OWNER can close room");
+            }
+
+        room.setActive(false);
+        roomRepo.save(room);
+        return ResponseEntity.ok("Room closed: " + code);
+    }
+
+
 
     /* ---------- helpers ---------- */
     private String getUsernameFromAuth(HttpServletRequest request) {

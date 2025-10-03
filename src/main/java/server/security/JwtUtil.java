@@ -18,6 +18,8 @@ public class JwtUtil {
     private String secret; // >= 32 bytes
     @Value("${app.jwt.expiration}")
     private long expirationMs;
+    @Value("${app.jwt.refresh-expiration}")
+    private long refreshExpirationMs;
 
     private Key key;
 
@@ -63,5 +65,17 @@ public class JwtUtil {
 
     public boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
+    }
+
+    /*------------generate refresh token */
+    public String generateRefreshToken(String username) {
+    Date now = new Date();
+    Date exp = new Date(now.getTime() + refreshExpirationMs);
+    return Jwts.builder()
+            .setSubject(username)
+            .setIssuedAt(now)
+            .setExpiration(exp)
+            .signWith(key, SignatureAlgorithm.HS256)
+            .compact();
     }
 }

@@ -29,7 +29,7 @@ public class SecurityConfig {
                 // static
                 .requestMatchers("/", "/index.html", "/css/**", "/js/**").permitAll()
                 // public APIs (khớp đúng path hiện tại của bạn)
-                .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login", "/api/auth/refresh").permitAll()
                 // cho phép bắt tay WS (token sẽ được kiểm trong SignalingHandler)
                 .requestMatchers("/signal/**").permitAll()
                 // còn lại cần JWT
