@@ -2,12 +2,12 @@ let ws;
 
 function connectWebSocket() {
   if (!joinedRoom) {
-    console.error("❌ Bạn chưa join phòng!");
+    console.error("Bạn chưa join phòng!");
     return;
   }
 
   if (!currentToken) {
-    console.error("❌ Chưa có token!");
+    console.error("Chưa có token!");
     return;
   }
 
@@ -17,7 +17,9 @@ function connectWebSocket() {
   ws.onopen = () => {
     console.log("✅ WebSocket connected");
     // Gửi message JOIN ngay khi WS open
-    ws.send(JSON.stringify({ type: "JOIN", room: joinedRoom, user: currentUser }));
+    ws.send(
+      JSON.stringify({ type: "JOIN", room: joinedRoom, user: currentUser })
+    );
   };
 
   ws.onmessage = (event) => {
@@ -34,7 +36,9 @@ function connectWebSocket() {
     if (data.type === "CHAT") {
       msgBox.innerHTML += `<div class="msg-other"><b>${data.user}:</b> ${data.text}</div>`;
     } else if (data.type === "JOINED") {
-      msgBox.innerHTML += `<div class="sys-msg">🚪 ${data.user || "Người dùng"} đã vào phòng ${data.room}</div>`;
+      msgBox.innerHTML += `<div class="sys-msg">${
+        data.user || "Người dùng"
+      } đã vào phòng ${data.room}</div>`;
     } else {
       msgBox.innerHTML += `<div class="sys-msg">${event.data}</div>`;
     }
