@@ -231,3 +231,18 @@ body {
 .messages-box::-webkit-scrollbar-thumb:hover {
   background: #999;
 }
+
+/* === List Room === */
+.room-item {
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin: 6px 0;
+  border-radius: 8px;
+  background: #f9f9f9;
+}
+.room-item p {
+  margin: 0 0 6px 0;
+}
+.room-item button {
+  margin-right: 6px;
+}
