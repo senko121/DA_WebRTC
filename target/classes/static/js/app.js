@@ -1,3 +1,73 @@
+// let ws;
+
+// function connectWebSocket() {
+//   if (!joinedRoom) {
+//     console.error("Bạn chưa join phòng!");
+//     return;
+//   }
+
+//   if (!currentToken) {
+//     console.error("Chưa có token!");
+//     return;
+//   }
+
+//   // Tạo kết nối WebSocket kèm JWT
+//   ws = new WebSocket(`ws://localhost:8080/signal?token=${currentToken}`);
+
+//   ws.onopen = () => {
+//     console.log("✅ WebSocket connected");
+//     // Gửi message JOIN ngay khi WS open
+//     ws.send(
+//       JSON.stringify({ type: "JOIN", room: joinedRoom, user: currentUser })
+//     );
+//   };
+
+//   ws.onmessage = (event) => {
+//     console.log("📩 Nhận:", event.data);
+//     let data;
+//     try {
+//       data = JSON.parse(event.data);
+//     } catch {
+//       data = { text: event.data };
+//     }
+
+//     const msgBox = document.getElementById("messages");
+
+//     if (data.type === "CHAT") {
+//       msgBox.innerHTML += `<div class="msg-other"><b>${data.user}:</b> ${data.text}</div>`;
+//     } else if (data.type === "JOINED") {
+//       msgBox.innerHTML += `<div class="sys-msg">${
+//         data.user || "Người dùng"
+//       } đã vào phòng ${data.room}</div>`;
+//     } else {
+//       msgBox.innerHTML += `<div class="sys-msg">${event.data}</div>`;
+//     }
+
+//     msgBox.scrollTop = msgBox.scrollHeight;
+//   };
+
+//   ws.onclose = () => console.log("❌ WebSocket disconnected");
+//   ws.onerror = (err) => console.error("⚠️ WebSocket error:", err);
+// }
+
+// function sendMessage() {
+//   const text = document.getElementById("msgInput").value.trim();
+//   if (!text || !ws || ws.readyState !== WebSocket.OPEN) {
+//     alert("Chưa kết nối WebSocket hoặc chưa join room!");
+//     return;
+//   }
+
+//   const msg = { type: "CHAT", room: joinedRoom, text: text, user: currentUser };
+//   ws.send(JSON.stringify(msg));
+
+//   // Hiển thị tin nhắn của chính mình
+//   const msgBox = document.getElementById("messages");
+//   msgBox.innerHTML += `<div class="msg-self"><b>${currentUser}:</b> ${text}</div>`;
+//   msgBox.scrollTop = msgBox.scrollHeight;
+//   document.getElementById("msgInput").value = "";
+
+// }
+
 let ws;
 
 function connectWebSocket() {
@@ -11,7 +81,6 @@ function connectWebSocket() {
     return;
   }
 
-  // Kết nối WebSocket
   ws = new WebSocket(`ws://localhost:8080/signal?token=${currentToken}`);
 
   ws.onopen = () => {
@@ -22,7 +91,6 @@ function connectWebSocket() {
   };
 
   ws.onmessage = (event) => {
-    console.log("📩 Nhận:", event.data);
     let data;
     try {
       data = JSON.parse(event.data);
@@ -30,85 +98,55 @@ function connectWebSocket() {
       data = { text: event.data };
     }
 
-    const msgBox = document.getElementById("messages");
-
     if (data.type === "CHAT") {
-      if (data.user === currentUser) {
-        // Tin nhắn của chính mình (bên phải)
-        msgBox.innerHTML += `
-          <div class="d-flex justify-content-between">
-            <p class="small mb-1 text-muted">${new Date().toLocaleTimeString()}</p>
-            <p class="small mb-1">${data.user}</p>
-          </div>
-          <div class="d-flex flex-row justify-content-end mb-4 pt-1">
-            <div>
-              <p class="small p-2 me-3 mb-3 text-white rounded-3 bg-warning">
-                ${data.text}
-              </p>
-            </div>
-            <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava6-bg.webp"
-              alt="avatar" style="width: 45px; height: 100%;">
-          </div>
-        `;
-      } else {
-        // Tin nhắn của người khác (bên trái)
-        msgBox.innerHTML += `
-          <div class="d-flex justify-content-between">
-            <p class="small mb-1">${data.user}</p>
-            <p class="small mb-1 text-muted">${new Date().toLocaleTimeString()}</p>
-          </div>
-          <div class="d-flex flex-row justify-content-start">
-            <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava5-bg.webp"
-              alt="avatar" style="width: 45px; height: 100%;">
-            <div>
-              <p class="small p-2 ms-3 mb-3 rounded-3 bg-body-tertiary">
-                ${data.text}
-              </p>
-            </div>
-          </div>
-        `;
-      }
+      renderMessage(data.user, data.text, data.user === currentUser);
     } else if (data.type === "JOINED") {
-      msgBox.innerHTML += `<div class="text-center text-muted small mb-2"><em>${
-        data.user || "Người dùng"
-      } đã vào phòng</em></div>`;
+      renderSystemMessage(`${data.user} đã vào phòng ${data.room}`);
+    } else if (data.type === "LEFT") {
+      renderSystemMessage(`${data.user} đã rời phòng`);
+    } else {
+      renderSystemMessage(event.data);
     }
-
-    msgBox.scrollTop = msgBox.scrollHeight;
   };
-
-  ws.onclose = () => console.log("❌ WebSocket disconnected");
-  ws.onerror = (err) => console.error("⚠️ WebSocket error:", err);
 }
 
 function sendMessage() {
   const text = document.getElementById("msgInput").value.trim();
-  if (!text || !ws || ws.readyState !== WebSocket.OPEN) {
-    alert("Chưa kết nối WebSocket hoặc chưa join room!");
-    return;
-  }
+  if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
 
   const msg = { type: "CHAT", room: joinedRoom, text: text, user: currentUser };
   ws.send(JSON.stringify(msg));
-
-  // Tự hiển thị tin nhắn của mình luôn
-  const msgBox = document.getElementById("messages");
-  msgBox.innerHTML += `
-    <div class="d-flex justify-content-between">
-      <p class="small mb-1 text-muted">${new Date().toLocaleTimeString()}</p>
-      <p class="small mb-1">${currentUser}</p>
-    </div>
-    <div class="d-flex flex-row justify-content-end mb-4 pt-1">
-      <div>
-        <p class="small p-2 me-3 mb-3 text-white rounded-3 bg-warning">
-          ${text}
-        </p>
-      </div>
-      <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava6-bg.webp"
-        alt="avatar" style="width: 45px; height: 100%;">
-    </div>
-  `;
-
-  msgBox.scrollTop = msgBox.scrollHeight;
+  renderMessage(currentUser, text, true);
   document.getElementById("msgInput").value = "";
+}
+
+function renderMessage(sender, text, isSelf = false) {
+  const msgBox = document.getElementById("messages");
+
+  const wrapper = document.createElement("div");
+  wrapper.className = `message ${isSelf ? "self" : "other"}`;
+
+  if (!isSelf) {
+    const name = document.createElement("div");
+    name.className = "sender";
+    name.textContent = sender;
+    wrapper.appendChild(name);
+  }
+
+  const bubble = document.createElement("div");
+  bubble.className = `bubble ${isSelf ? "self-bubble" : "other-bubble"}`;
+  bubble.textContent = text;
+
+  wrapper.appendChild(bubble);
+  msgBox.appendChild(wrapper);
+  msgBox.scrollTop = msgBox.scrollHeight;
+}
+
+function renderSystemMessage(text) {
+  const msgBox = document.getElementById("messages");
+  const sysMsg = document.createElement("div");
+  sysMsg.className = "system-message";
+  sysMsg.textContent = text;
+  msgBox.appendChild(sysMsg);
+  msgBox.scrollTop = msgBox.scrollHeight;
 }

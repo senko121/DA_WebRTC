@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="UTF-8" />
     <title>WebRTC App</title>
@@ -7,36 +7,52 @@
   </head>
   <body>
     <div class="app-container">
-      <h2>WebRTC Demo</h2>
+      <h2>WebRTC Chat Demo</h2>
 
-      <!-- Auth -->
-      <div id="authSection">
-        <input class="app-input" id="username" placeholder="Username" />
+      <!-- Đăng nhập / đăng ký -->
+      <div id="authSection" class="section">
+        <input class="app-input" id="username" placeholder="Tên đăng nhập" />
         <input
           class="app-input"
           id="password"
           type="password"
-          placeholder="Password"
+          placeholder="Mật khẩu"
         />
-        <button class="app-btn" onclick="register()">Register</button>
-        <button class="app-btn" onclick="login()">Login</button>
+        <div class="btn-group">
+          <button class="app-btn primary" onclick="register()">Đăng ký</button>
+          <button class="app-btn secondary" onclick="login()">Đăng nhập</button>
+        </div>
       </div>
 
-      <!-- Room -->
-      <div id="roomSection" style="display: none">
-        <button class="app-btn" onclick="createRoom()">Tạo phòng</button>
-        <input class="app-input" id="roomCode" placeholder="Mã phòng..." />
-        <button class="app-btn" onclick="joinRoom()">Join phòng</button>
+      <!-- Chọn phòng -->
+      <div id="roomSection" class="section" style="display: none">
+        <h3>Quản lý phòng</h3>
+        <div class="btn-group">
+          <button class="app-btn primary" onclick="createRoom()">
+            Tạo phòng
+          </button>
+        </div>
+        <input class="app-input" id="roomCode" placeholder="Nhập mã phòng..." />
+        <button class="app-btn secondary" onclick="joinRoom()">
+          Tham gia phòng
+        </button>
       </div>
 
-      <!-- Chat -->
-      <div id="chatSection" style="display: none">
+      <!-- Khu vực chat -->
+      <div id="chatSection" class="section" style="display: none">
         <h3>Chat Room</h3>
         <div id="messages" class="messages-box"></div>
-        <input id="msgInput" class="msg-input" placeholder="Nhập tin nhắn..." />
-        <button id="sendBtn" class="app-btn send-btn" onclick="sendMessage()">
-          Gửi
-        </button>
+        <div class="chat-input">
+          <input
+            id="msgInput"
+            class="msg-input"
+            placeholder="Nhập tin nhắn..."
+            onkeydown="if(event.key==='Enter') sendMessage()"
+          />
+          <button id="sendBtn" class="app-btn primary" onclick="sendMessage()">
+            Gửi
+          </button>
+        </div>
       </div>
     </div>
 
