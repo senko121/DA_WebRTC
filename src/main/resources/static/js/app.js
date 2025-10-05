@@ -70,7 +70,7 @@
 
 let ws;
 const API_BASE = "http://localhost:8080/api";
-let currentToken = ""; // token đã lấy khi login
+// let currentToken = ""; // token đã lấy khi login
 
 function connectWebSocket() {
   if (!joinedRoom) {
